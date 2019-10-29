@@ -1,55 +1,36 @@
 const { GraphQLServer } = require('graphql-yoga')
+const { prisma } = require('./generated/prisma-client')
 
-let links = [
-    {
-        id: 'link-0',
-        url: 'www.howtographql.com',
-        description: 'Fullstack tutorial for GraphQL'
-    },
-    {
-        id: 'link-1',
-        url: 'www.yahoo.com',
-        description: 'Fullstack tutorial for GraphQL'
-    },
-    {
-        id: 'link-2',
-        url: 'www.google.com',
-        description: 'Fullstack tutorial for GraphQL'
-    }
-]
-
-let idCount = links.length;
-
-// 2
 const resolvers = {
     Query: {
         info: () => `This is the API of a Hackernews Clone`,
-        feed: () => links,
-        // link: (ID) => links(id = ID)
+        feed: (root, args, context, info) => {
+            return context.prisma.links()
+        },
+        // ind_link: (root, args, context, info) => {
+        //     return context.prisma.links()
+        // }
     },
     Mutation: {
-        post: (parent, args) => {
-            const link = {
-                id: `link-${idCount++}`,
-                description: args.description,
+        post: (root, args, context) => {
+            return context.prisma.createLink({
                 url: args.url,
-            }
-            links.push(link);
-            return link;
+                description: args.description,
+            })
         },
-        // updateLink: (parent, args) => {
-        //     let linkUpdated = ;
-        //     linkUpdated.description = args.description,
-        //     linkUpdated.url = args.url
-        //     return linkUpdated;
+        // update: (root, args, context) => {
+        //     return context.prisma.updateLink({
+        //         url: args.url,
+        //         description: args.description,
+        //     }, { id: args.id })
         // },
-    },
+    }
 }
 
-// 3
 const server = new GraphQLServer({
     typeDefs: './src/schema.graphql',
     resolvers,
+    context: { prisma },
 })
 
 server.start(() => console.log(`Server is running on http://localhost:4000`))
